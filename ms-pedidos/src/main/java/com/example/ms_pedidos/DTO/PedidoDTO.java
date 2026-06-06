@@ -12,5 +12,6 @@ import lombok.RequiredArgsConstructor;
 public class PedidoDTO {
 
     private Integer numPedido;
-
+    private String estado;
+    private Double total;
 }
