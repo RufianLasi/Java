@@ -2,7 +2,7 @@ name: CI/CD ms-producto
 
 on:
   push:
-    branches: [ "master" ]
+    branches: ["master"]
 
 jobs:
   build-and-deploy:
@@ -17,8 +17,8 @@ jobs:
       - name: Configurar Java
         uses: actions/setup-java@v4
         with:
-          java-version: '21'
-          distribution: 'temurin'
+          java-version: "21"
+          distribution: "temurin"
           cache: maven
 
       - name: Dar permisos al Maven Wrapper
@@ -34,15 +34,19 @@ jobs:
           mkdir -p ~/.ssh
           echo "${{ secrets.EC2_SSH_KEY }}" > ~/.ssh/ec2_key
           chmod 600 ~/.ssh/ec2_key
-          ssh-keyscan -H ${{ secrets.EC2_HOST }} >> ~/.ssh/known_hosts
+          ssh-keyscan -H "${{ secrets.EC2_HOST }}" >> ~/.ssh/known_hosts
+
+      - name: Copiar proyecto a EC2
+        run: |
+          scp -i ~/.ssh/ec2_key -r ./ms-producto/* \
+          ${{ secrets.EC2_USERNAME }}@${{ secrets.EC2_HOST }}:~/Java/ms-producto/
 
       - name: Desplegar en EC2
         run: |
-          ssh -i ~/.ssh/ec2_key ${{ secrets.EC2_USERNAME }}@${{ secrets.EC2_HOST }} << 'EOF'
+          ssh -i ~/.ssh/ec2_key \
+          ${{ secrets.EC2_USERNAME }}@${{ secrets.EC2_HOST }} << 'EOF'
 
             cd ~/Java/ms-producto
-
-            git pull origin master
 
             docker build -t ms-producto .
 
