@@ -23,7 +23,7 @@ jobs:
 
       - name: Compilar proyecto
         working-directory: ./ms-producto
-        run: ./mvnw clean package -DskipTests
+        run: mvn clean package -DskipTests
 
       - name: Construir imagen Docker
         working-directory: ./ms-producto
