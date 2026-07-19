@@ -30,12 +30,13 @@ jobs:
           mkdir -p ~/.ssh
           echo "${{ secrets.EC2_SSH_KEY }}" > ~/.ssh/ec2_key
           chmod 600 ~/.ssh/ec2_key
-          ssh-keyscan -H "${{ secrets.EC2_HOST }}" >> ~/.ssh/known_hosts
+          ssh-keyscan -H ${{ secrets.EC2_HOST }} >> ~/.ssh/known_hosts
 
-      - name: Copiar proyecto a EC2
+      - name: Copiar JAR a la EC2
         run: |
-          scp -i ~/.ssh/ec2_key -r ./ms-producto/* \
-          ${{ secrets.EC2_USERNAME }}@${{ secrets.EC2_HOST }}:~/Java/ms-producto/
+          scp -i ~/.ssh/ec2_key \
+          ms-producto/target/*.jar \
+          ${{ secrets.EC2_USERNAME }}@${{ secrets.EC2_HOST }}:/home/ec2-user/Java/ms-producto/target/
 
       - name: Desplegar en EC2
         run: |
@@ -47,6 +48,7 @@ jobs:
             docker build -t ms-producto .
 
             docker stop ms-producto || true
+
             docker rm ms-producto || true
 
             docker run -d \
