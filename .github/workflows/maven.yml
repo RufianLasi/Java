@@ -3,14 +3,14 @@ name: CI/CD ms-producto
 on:
   push:
     branches: [ "master" ]
-  pull_request:
-    branches: [ "master" ]
 
 jobs:
-  build:
+  build-and-deploy:
+
     runs-on: ubuntu-latest
 
     steps:
+
       - name: Descargar código
         uses: actions/checkout@v4
 
@@ -21,10 +21,41 @@ jobs:
           distribution: 'temurin'
           cache: maven
 
+      - name: Dar permisos al Maven Wrapper
+        working-directory: ./ms-producto
+        run: chmod +x mvnw
+
       - name: Compilar proyecto
         working-directory: ./ms-producto
-        run: mvn clean package -DskipTests
+        run: ./mvnw clean package -DskipTests
 
-      - name: Construir imagen Docker
-        working-directory: ./ms-producto
-        run: docker build -t ms-producto .
+      - name: Configurar SSH
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.EC2_SSH_KEY }}" > ~/.ssh/ec2_key
+          chmod 600 ~/.ssh/ec2_key
+          ssh-keyscan -H ${{ secrets.EC2_HOST }} >> ~/.ssh/known_hosts
+
+      - name: Desplegar en EC2
+        run: |
+          ssh -i ~/.ssh/ec2_key ${{ secrets.EC2_USERNAME }}@${{ secrets.EC2_HOST }} << 'EOF'
+
+            cd ~/Java/ms-producto
+
+            git pull origin master
+
+            docker build -t ms-producto .
+
+            docker stop ms-producto || true
+            docker rm ms-producto || true
+
+            docker run -d \
+              --name ms-producto \
+              --network red-microservicios \
+              -p 8081:8081 \
+              -e DB_URL=jdbc:mysql://mysql:3306/ms_producto \
+              -e DB_USERNAME=root \
+              -e DB_PASSWORD=root \
+              ms-producto
+
+          EOF
