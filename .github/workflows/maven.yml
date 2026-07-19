@@ -21,13 +21,9 @@ jobs:
           distribution: "temurin"
           cache: maven
 
-      - name: Dar permisos al Maven Wrapper
-        working-directory: ./ms-producto
-        run: chmod +x mvnw
-
       - name: Compilar proyecto
         working-directory: ./ms-producto
-        run: ./mvnw clean package -DskipTests
+        run: mvn clean package -DskipTests
 
       - name: Configurar SSH
         run: |
