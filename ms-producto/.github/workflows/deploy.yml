@@ -1,0 +1,36 @@
+name: Deploy ms-producto to AWS EC2
+
+on:
+  push:
+    branches:
+      - master
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Deploy to EC2
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          script: |
+            cd ~/ms-producto
+
+            git pull origin master
+
+            docker stop ms-producto || true
+            docker rm ms-producto || true
+
+            docker build -t ms-producto .
+
+            docker run -d \
+              --name ms-producto \
+              --network red-microservicios \
+              -p 8081:8081 \
+              -e DB_URL=jdbc:mysql://mysql:3306/ms_producto \
+              -e DB_USERNAME=root \
+              -e DB_PASSWORD=root \
+              ms-producto
