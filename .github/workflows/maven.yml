@@ -1,0 +1,30 @@
+namxe: CI/CD ms-producto
+
+on:
+  push:
+    branches: [ "master" ]
+  pull_request:
+    branches: [ "master" ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Descargar código
+        uses: actions/checkout@v4
+
+      - name: Configurar Java
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+          cache: maven
+
+      - name: Compilar proyecto
+        working-directory: ./ms-producto
+        run: ./mvnw clean package -DskipTests
+
+      - name: Construir imagen Docker
+        working-directory: ./ms-producto
+        run: docker build -t ms-producto .
